@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Container, Graphics } from 'pixi.js'
 
 const GRID_OFFSET = 1
@@ -10,7 +11,7 @@ export class Grid {
   activeX = 1
   activeY = 1
   tailLength = 3
-  activeIndex = 23
+  activeIndex = 200
   foodIndex = 63
   activeTailIndexes: number[] = []
 
@@ -39,10 +40,10 @@ export class Grid {
         rect.y = yPos
 
         // rect.interactive = true
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // // @ts-ignore
         // rect.mouseover = () => {
-        //   this.activeIndex = index
+        //   console.log({ index })
         // }
 
         this.cells[index] = rect
@@ -95,8 +96,7 @@ export class Grid {
           } else if (activeTailIndexes.includes(index)) {
             rectGraphic.beginFill(
               0x5d8fc2,
-              (activeTailIndexes.indexOf(index) * 10) /
-                activeTailIndexes.length,
+              activeTailIndexes.indexOf(index) / activeTailIndexes.length + 0.2,
             )
           } else {
             rectGraphic.beginFill()
