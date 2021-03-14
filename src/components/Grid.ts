@@ -39,13 +39,6 @@ export class Grid {
         rect.x = xPos
         rect.y = yPos
 
-        // rect.interactive = true
-        // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // // @ts-ignore
-        // rect.mouseover = () => {
-        //   console.log({ index })
-        // }
-
         this.cells[index] = rect
       }
     }

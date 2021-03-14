@@ -1,5 +1,5 @@
-// @ts-ignore
 import * as PIXI from 'pixi.js'
+import PIXISound from 'pixi-sound'
 
 // @ts-ignore
 global.PIXI = PIXI
@@ -8,6 +8,7 @@ window.PIXI = PIXI
 
 import { Grid } from '@/components/Grid'
 
+const APP_FPS = 60
 const GRID_SIZE = 461
 const GRID_SIZE_X = 22
 const GRID_SIZE_Y = 22
@@ -16,9 +17,28 @@ const GRID_CELL_SIZE = 23
 const storedDeaths = window.localStorage.getItem('deaths')
 
 new (class Snake {
+  startButton = document.getElementById('start-button')
+
+  noms = [
+    PIXISound.Sound.from('./public/eat1.wav'),
+    PIXISound.Sound.from('./public/eat2.wav'),
+    PIXISound.Sound.from('./public/eat3.wav'),
+  ]
+  dead = PIXISound.Sound.from('./public/dead.wav')
+  move = PIXISound.Sound.from('./public/move.wav')
+
   // @ts-ignore
-  app = new PIXI.Application()
+  app = new PIXI.Application(GRID_SIZE, GRID_SIZE, {
+    transparent: true,
+    sharedTicker: false,
+    autoStart: false,
+  })
+
+  // @ts-ignore
+  ticker = new PIXI.Ticker()
   grid = new Grid(GRID_SIZE_X, GRID_SIZE_Y, GRID_CELL_SIZE)
+  fpsDelta = 306 / APP_FPS
+  elapsedTime = 0
 
   activeKey: string | null = null
 
@@ -30,65 +50,47 @@ new (class Snake {
   deathKeep = document.getElementById('deaths')
   scoreKeep = document.getElementById('score')
 
+  actuallyReset() {
+    this.direction.x = 1
+    this.direction.y = 0
+    this.grid.tailLength = 3
+    this.grid.activeIndex = 200
+    this.grid.activeTailIndexes = []
+  }
+
   constructor() {
+    this.startButton = document.getElementById('start-button')
     this.app.view.width = GRID_SIZE
     this.app.view.height = GRID_SIZE
     document.body.appendChild(this.app.view)
     this.start()
-    this.app.ticker.add(() => this.update())
+
+    const loader = document.getElementById('loading')
+    if (loader) {
+      loader.style.display = 'none'
+    }
 
     document.body.onkeydown = (event) => {
       if (this.isResetting) {
-        this.direction.x = 1
-        this.direction.y = 0
-        this.grid.tailLength = 3
-        this.grid.activeIndex = 200
-        this.grid.activeTailIndexes = []
-
-        this.isResetting = false
+        if (['Enter', 'Space'].includes(event.code)) {
+          this.actuallyReset()
+          setTimeout(() => {
+            this.isResetting = false
+            this.startButton?.classList.add('hidden')
+          }, 120)
+        }
+      } else {
+        this.activeKey = event.code
       }
-      this.activeKey = event.code
     }
+  }
 
-    let touchstartX = 0
-    let touchstartY = 0
-    let touchendX = 0
-    let touchendY = 0
+  tick(delta: number) {
+    this.elapsedTime += delta
 
-    // @ts-ignore
-    const dragStart = function (event) {
-      // @ts-ignore
-      touchstartX = event.screenX
-      // @ts-ignore
-      touchstartY = event.screenY
-    }
-
-    // @ts-ignore
-    const dragEnd = function (event) {
-      // @ts-ignore
-      touchendX = event.screenX
-      // @ts-ignore
-      touchendY = event.screenY
-      handleGesture()
-    }
-
-    document.body.addEventListener('touchstart', dragStart, false)
-
-    document.body.addEventListener('touchend', dragEnd, false)
-
-    const handleGesture = () => {
-      if (touchendX < touchstartX) {
-        this.activeKey = 'ArrowUp'
-      }
-      if (touchendX > touchstartX) {
-        this.activeKey = 'ArrowRight'
-      }
-      if (touchendY < touchstartY) {
-        this.activeKey = 'ArrowDown'
-      }
-      if (touchendY > touchstartY) {
-        this.activeKey = 'ArrowLeft'
-      }
+    if (this.elapsedTime >= this.fpsDelta) {
+      this.update(this.elapsedTime)
+      this.elapsedTime = 0
     }
   }
 
@@ -97,11 +99,12 @@ new (class Snake {
     this.grid.stage.y = -GRID_CELL_SIZE
     this.app.stage.addChild(this.grid.stage)
     this.grid.generate()
+
+    this.ticker.add(this.tick.bind(this))
+    this.ticker.start()
   }
 
-  drawing = false
-  isResetting = false
-  drawingTimeout?: ReturnType<typeof setTimeout>
+  isResetting = true
 
   direction = {
     x: 1,
@@ -109,18 +112,17 @@ new (class Snake {
   }
 
   reset() {
-    this.drawing = false
+    if (this.startButton) {
+      this.startButton.innerText = 'Reset'
+      this.startButton.classList.remove('hidden')
+    }
+    this.dead.play()
     this.isResetting = true
     this.deaths += 1
     window.localStorage.setItem('deaths', String(this.deaths))
   }
 
   handleMovement() {
-    this.drawing = true
-    if (this.drawingTimeout) {
-      clearTimeout(this.drawingTimeout)
-    }
-
     if (this.grid.activeTailIndexes.includes(this.grid.activeIndex)) {
       return this.reset()
     }
@@ -142,6 +144,7 @@ new (class Snake {
     }
 
     if (this.grid.activeIndex === this.grid.foodIndex) {
+      this.noms[Math.floor(Math.random() * this.noms.length)].play()
       this.grid.placeFood()
       this.grid.tailLength += 3
     }
@@ -198,9 +201,9 @@ new (class Snake {
       this.grid.activeIndex += 1
     }
 
-    this.activeKey = null
+    this.move.play()
 
-    this.drawingTimeout = setTimeout(() => (this.drawing = false), 75)
+    this.activeKey = null
   }
 
   updateScore() {
@@ -214,11 +217,25 @@ new (class Snake {
     }
   }
 
-  update() {
-    this.grid.draw()
-    if (!this.drawing && !this.isResetting) {
+  update(_delta: number) {
+    if (!this.isResetting) {
       this.handleMovement()
     }
     this.updateScore()
+    this.grid.draw()
+
+    if (!this.startButton) {
+      this.startButton = document.getElementById('start-button')
+
+      if (this.startButton) {
+        this.startButton.onclick = () => {
+          this.actuallyReset()
+          setTimeout(() => {
+            this.isResetting = false
+            this.startButton?.classList.add('hidden')
+          }, 120)
+        }
+      }
+    }
   }
 })()

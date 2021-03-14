@@ -40,6 +40,10 @@
           justify-content: center;
           background-color: black;
       }
+      body {
+          width: 100%;
+          background-image: radial-gradient(#050414, #0a0204, black);
+      }
       canvas {
           outline: 1px solid white;
           image-rendering: pixelated;
@@ -61,9 +65,72 @@
       #deaths {
           color: red;
       }
+
+      #start-button {
+          margin-top: 32px;
+          line-height: 54px;
+          text-align: center;
+          height: 50px;
+          width: 120px;
+          z-index: 1000;
+          font-size: 1.2em;
+          cursor: pointer;
+          outline: 1px solid white;
+          image-rendering: pixelated;
+          transition: .2s ease;
+          font-family: "Courier Std", monospace;
+          box-shadow: 7px 7px 0 0 black, 8px 8px 0 0 red, -7px -7px 0 0 black, -8px -8px 0 0 blue;
+      }
+
+      #start-button.hidden {
+          opacity: 0;
+          pointer-events: none;
+      }
+
+      #loading {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          margin: auto;
+          z-index: 0;
+          background: black;
+          height: 200px;
+          width: 200px;
+          outline: 1px solid white;
+          box-shadow: 7px 7px 0 0 black, 8px 8px 0 0 red, -7px -7px 0 0 black, -8px -8px 0 0 blue;
+      }
+      #loading img {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          margin: auto;
+          height: 120px;
+          width: 120px;
+      }
+      #loading h4 {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          margin: auto;
+          text-align: center;
+          font-family: "Courier Std", monospace;
+          font-size: 1.4em;
+          line-height: 210px;
+          z-index: 2;
+      }
   </style>
 </head>
 <body>
+<div id="loading">
+  <h4>Loading</h4>
+  <img src="./public/loading.gif" alt="Loading Snake...">
+</div>
 <div class="scoreKeeper">
   Score: <span id="score">0</span>
 </div>
@@ -71,5 +138,6 @@
   Deaths: <span id="deaths">0</span>
 </div>
 <script src="./dist/bundle.js"></script>
+<div id="start-button">Start</div>
 </body>
 </html>
