@@ -8,15 +8,18 @@ window.PIXI = PIXI
 
 import { Grid } from '@/components/Grid'
 
-const APP_FPS = 60
 const GRID_SIZE = 461
 const GRID_SIZE_X = 22
 const GRID_SIZE_Y = 22
 const GRID_CELL_SIZE = 23
 
+let last = 0
+
 const storedDeaths = window.localStorage.getItem('deaths')
 
 new (class Snake {
+  hasPrintedSettings = false
+
   startButton = document.getElementById('start-button')
 
   noms = [
@@ -29,16 +32,11 @@ new (class Snake {
 
   // @ts-ignore
   app = new PIXI.Application(GRID_SIZE, GRID_SIZE, {
-    transparent: true,
     sharedTicker: false,
     autoStart: false,
   })
 
-  // @ts-ignore
-  ticker = new PIXI.Ticker()
   grid = new Grid(GRID_SIZE_X, GRID_SIZE_Y, GRID_CELL_SIZE)
-  fpsDelta = 306 / APP_FPS
-  elapsedTime = 0
 
   activeKey: string | null = null
 
@@ -50,6 +48,13 @@ new (class Snake {
   deathKeep = document.getElementById('deaths')
   scoreKeep = document.getElementById('score')
 
+  isResetting = true
+
+  direction = {
+    x: 1,
+    y: 0,
+  }
+
   actuallyReset() {
     this.direction.x = 1
     this.direction.y = 0
@@ -59,16 +64,11 @@ new (class Snake {
   }
 
   constructor() {
+    document.body.appendChild(this.app.view)
+
     this.startButton = document.getElementById('start-button')
     this.app.view.width = GRID_SIZE
     this.app.view.height = GRID_SIZE
-    document.body.appendChild(this.app.view)
-    this.start()
-
-    const loader = document.getElementById('loading')
-    if (loader) {
-      loader.style.display = 'none'
-    }
 
     document.body.onkeydown = (event) => {
       if (this.isResetting) {
@@ -83,15 +83,55 @@ new (class Snake {
         this.activeKey = event.code
       }
     }
+
+    this.start()
   }
 
   tick(delta: number) {
-    this.elapsedTime += delta
+    // @ts-ignore
+    const FPS = window.GLOBAL_SPEED || 10
+    const INTERVAL = (1e3 / FPS) | 0
 
-    if (this.elapsedTime >= this.fpsDelta) {
-      this.update(this.elapsedTime)
-      this.elapsedTime = 0
+    requestAnimationFrame(this.tick.bind(this))
+
+    const now = performance.now() | 0 // Fix occasional drop-off frames
+    const elapsed = now - last
+
+    if (elapsed < INTERVAL) return
+
+    switch (this.activeKey) {
+      default:
+        break
+      case 'ArrowUp':
+        if (this.direction.y !== 1) {
+          this.direction.y = -1
+          this.direction.x = 0
+        }
+        break
+      case 'ArrowDown':
+        if (this.direction.y !== -1) {
+          this.direction.y = 1
+          this.direction.x = 0
+        }
+        break
+      case 'ArrowLeft':
+        if (this.direction.x !== 1) {
+          this.direction.x = -1
+          this.direction.y = 0
+        }
+        break
+      case 'ArrowRight':
+        if (this.direction.x !== -1) {
+          this.direction.x = 1
+          this.direction.y = 0
+        }
+        break
     }
+
+    this.update(delta)
+
+    // Excellent
+    last = now - (elapsed % INTERVAL)
   }
 
   start() {
@@ -100,15 +140,12 @@ new (class Snake {
     this.app.stage.addChild(this.grid.stage)
     this.grid.generate()
 
-    this.ticker.add(this.tick.bind(this))
-    this.ticker.start()
-  }
+    this.tick(0)
 
-  isResetting = true
-
-  direction = {
-    x: 1,
-    y: 0,
+    const loader = document.getElementById('loading')
+    if (loader) {
+      loader.style.display = 'none'
+    }
   }
 
   reset() {
@@ -154,37 +191,6 @@ new (class Snake {
       this.grid.activeTailIndexes.splice(0, 1)
     }
 
-    if (this.activeKey) {
-      switch (this.activeKey) {
-        default:
-          break
-        case 'ArrowUp':
-          if (this.direction.y !== 1) {
-            this.direction.y = -1
-            this.direction.x = 0
-          }
-          break
-        case 'ArrowDown':
-          if (this.direction.y !== -1) {
-            this.direction.y = 1
-            this.direction.x = 0
-          }
-          break
-        case 'ArrowLeft':
-          if (this.direction.x !== 1) {
-            this.direction.x = -1
-            this.direction.y = 0
-          }
-          break
-        case 'ArrowRight':
-          if (this.direction.x !== -1) {
-            this.direction.x = 1
-            this.direction.y = 0
-          }
-          break
-      }
-    }
-
     if (this.direction.y === -1) {
       this.grid.activeIndex -= GRID_SIZE_Y
     }
@@ -218,9 +224,21 @@ new (class Snake {
   }
 
   update(_delta: number) {
+    if (!this.hasPrintedSettings) {
+      this.hasPrintedSettings = true
+      console.log(
+        `Hello gamer!
+  Settings:
+%c|    GLOBAL_SPEED = 10    |
+`,
+        'color: white; background-color: black;',
+      )
+    }
+
     if (!this.isResetting) {
       this.handleMovement()
     }
+
     this.updateScore()
     this.grid.draw()
 
