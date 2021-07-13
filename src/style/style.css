@@ -1,0 +1,97 @@
+body, html {
+    color: white;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: black;
+    overflow: hidden;
+    user-select: none;
+}
+body {
+    width: 100%;
+    background-image: radial-gradient(#050414, #0a0204, black);
+}
+canvas {
+    outline: 1px solid white;
+    image-rendering: pixelated;
+}
+.scoreKeeper, .deathKeeper {
+    margin-bottom: 8px;
+    font-size: 1.4em;
+    font-family: "Courier Std", monospace;
+}
+
+#score {
+    color: #7aa3d6;
+}
+
+#deaths {
+    color: red;
+}
+
+#start-button {
+    line-height: 54px;
+    text-align: center;
+    height: 50px;
+    width: 120px;
+    z-index: 1000;
+    font-size: 1.2em;
+    cursor: pointer;
+    outline: 1px solid white;
+    image-rendering: pixelated;
+    transition: .1s ease;
+    font-family: "Courier Std", monospace;
+}
+#start-button:hover {
+    background-color: #24223b;
+}
+#start-button:active {
+    background-color: #0d0c18;
+}
+
+#start-button.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    z-index: 0;
+    background: black;
+    height: 200px;
+    width: 200px;
+    outline: 1px solid white;
+}
+
+#loading img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    height: 120px;
+    width: 120px;
+}
+
+#loading h4 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    text-align: center;
+    font-family: "Courier Std", monospace;
+    font-size: 1.4em;
+    line-height: 210px;
+    z-index: 2;
+}
